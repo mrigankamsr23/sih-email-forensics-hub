@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisMail Forensics AI — SIH 2026 Problem Statement 26106</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cyber: {
+              bg: '#07090e',
+              card: '#0d1322',
+              cyan: '#00f0ff',
+              blue: '#3b82f6',
+              rose: '#f43f5e',
+              emerald: '#10b981',
+              amber: '#f59e0b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#07090e] text-slate-100 min-h-screen flex flex-col selection:bg-cyan-500 selection:text-black">
+
+  <!-- TOP APP BAR -->
+  <header class="no-print border-b border-slate-800/80 bg-[#0a0f1d]/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-shield-halved text-slate-950 text-xl font-bold"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-base sm:text-lg tracking-wide text-white">AEGIS<span class="text-cyan-400">MAIL</span> FORENSICS AI</h1>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-700/50">SIH 2026 PS-26106</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-mono hidden sm:block">AI-Powered Email Threat Detection, Geolocation & Forensic Intelligence Platform</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-4">
+        <div class="hidden md:flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Antigravity AI Engine Active</span>
+        </div>
+        <button onclick="triggerPrintDossier()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-md shadow-cyan-500/20">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span>Export Dossier</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN NAVIGATION TABS -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto space-x-1 sm:space-x-4 border-t border-slate-800/40 text-xs sm:text-sm font-medium">
+      <button data-tab="tab-studio" class="nav-tab-btn active px-4 py-2.5 flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-microscope text-cyan-400"></i>
+        <span>Live Forensics Studio</span>
+      </button>
+      <button data-tab="tab-trace" class="nav-tab-btn px-4 py-2.5 flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-route text-emerald-400"></i>
+        <span>Relay Trace & Geo Map</span>
+      </button>
+      <button data-tab="tab-graph" class="nav-tab-btn px-4 py-2.5 flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-diagram-project text-purple-400"></i>
+        <span>Campaign Threat Graph</span>
+      </button>
+      <button data-tab="tab-team" class="nav-tab-btn px-4 py-2.5 flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-users-gear text-amber-400"></i>
+        <span>SIH 6-Member Team Matrix</span>
+      </button>
+      <button data-tab="tab-capabilities" class="nav-tab-btn px-4 py-2.5 flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-wand-magic-sparkles text-rose-400"></i>
+        <span>Antigravity AI Capabilities & Roadmap</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- FORENSIC SCAN OVERLAY (Dynamic Modal during analysis) -->
+  <div id="scan-progress-overlay" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center hidden">
+    <div class="glass-panel p-8 max-w-md w-full mx-4 border-cyan-500/40 text-center relative scanline-effect">
+      <div class="w-16 h-16 rounded-full bg-cyan-950/80 border-2 border-cyan-400 flex items-center justify-center mx-auto mb-4 animate-pulse-glow">
+        <i class="fa-solid fa-fingerprint text-2xl text-cyan-400"></i>
+      </div>
+      <h3 class="text-lg font-bold text-white mb-1">Executing Deep Forensic Scan</h3>
+      <p id="scan-step-text" class="text-xs font-mono text-cyan-300 mb-6 h-8 flex items-center justify-center">Initializing Multi-Signal Engine...</p>
+      
+      <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800 mb-2">
+        <div id="scan-progress-bar" class="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-rose-500 transition-all duration-300" style="width: 10%"></div>
+      </div>
+      <span class="text-[10px] font-mono text-slate-500">SIH Problem Statement 26106 Engine • Antigravity AI</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: LIVE FORENSICS STUDIO -->
+    <!-- ========================================================================= -->
+    <div id="tab-studio" class="tab-pane space-y-6">
+
+      <!-- PRESET SAMPLE SELECTOR -->
+      <div class="glass-panel p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <i class="fa-solid fa-flask-vial text-cyan-400"></i>
+              <span>Select Real SIH Test Case or Upload Email</span>
+            </h2>
+            <p class="text-xs text-slate-400">Choose from pre-loaded realistic SIH scenarios or paste/upload custom raw headers</p>
+          </div>
+          <span class="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1 rounded border border-slate-800">
+            Case ID: <span id="case-id-display" class="text-cyan-300 font-bold">CASE-2026-SBI-98214</span>
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <button data-preset="sbi_bank" class="preset-btn text-left p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 transition-all border-cyan-400 bg-cyan-950/40">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-white">SBI YONO Phishing</span>
+              <span class="badge-critical px-2 py-0.5 rounded text-[10px] font-bold">94 / 100</span>
+            </div>
+            <p class="text-[11px] text-slate-400 line-clamp-2">PAN/KYC deactivation threat, forged domain & lookalike .cc reply-to</p>
+          </button>
+
+          <button data-preset="principal_bec" class="preset-btn text-left p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 transition-all">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-white">College Principal BEC</span>
+              <span class="badge-high px-2 py-0.5 rounded text-[10px] font-bold">86 / 100</span>
+            </div>
+            <p class="text-[11px] text-slate-400 line-clamp-2">NAAC emergency fund fraud, UPI advance scam, webmail reply drop</p>
+          </button>
+
+          <button data-preset="income_tax" class="preset-btn text-left p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 transition-all">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-white">Income Tax Refund Scam</span>
+              <span class="badge-critical px-2 py-0.5 rounded text-[10px] font-bold">92 / 100</span>
+            </div>
+            <p class="text-[11px] text-slate-400 line-clamp-2">Rs. 42,850 refund lure, typosquatted portal, 48hr forfeiture deadline</p>
+          </button>
+
+          <button data-preset="google_legit" class="preset-btn text-left p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 transition-all">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-white">Google Security (Legit)</span>
+              <span class="badge-clean px-2 py-0.5 rounded text-[10px] font-bold">02 / 100</span>
+            </div>
+            <p class="text-[11px] text-slate-400 line-clamp-2">Authentic sign-in notice, 100% SPF/DKIM/DMARC pass, zero risk</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN RESULTS DASHBOARD GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: THREAT GAUGE & AUTHENTICATION MATRIX -->
+        <div class="lg:col-span-4 space-y-6">
+
+          <!-- THREAT SCORE CARD -->
+          <div class="glass-panel p-6 text-center relative overflow-hidden">
+            <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">Aggregated Forensic Risk Score</div>
+            
+            <div class="flex items-baseline justify-center gap-1 my-3">
+              <span id="threat-score-number" class="text-6xl font-black font-mono tracking-tighter text-white">94</span>
+              <span class="text-xl font-bold text-slate-500 font-mono">/100</span>
+            </div>
+
+            <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800 my-4">
+              <div id="threat-score-bar" class="h-full bg-gradient-to-r from-rose-500 to-red-600 transition-all duration-700" style="width: 94%"></div>
+            </div>
+
+            <div class="flex justify-center">
+              <span id="threat-level-badge" class="badge-critical px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider">
+                CRITICAL THREAT (PHISHING)
+              </span>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-slate-800 text-left text-xs space-y-2">
+              <div class="flex justify-between text-slate-400">
+                <span>Subject:</span>
+                <span id="case-subject-display" class="text-slate-200 font-medium truncate max-w-[200px]">SBI Alert</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>From:</span>
+                <span id="case-from-display" class="text-slate-200 font-medium truncate max-w-[200px]">alert@sbi.co.in</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>Reply-To:</span>
+                <span id="case-replyto-display" class="text-rose-300 font-medium truncate max-w-[200px]">support@sbi-kyc-desk.cc</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>To:</span>
+                <span id="case-to-display" class="text-slate-200 font-medium truncate max-w-[200px]">victim@gmail.com</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>Timestamp:</span>
+                <span id="case-date-display" class="text-slate-400 font-mono text-[11px]">31-Aug-2026</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AUTHENTICATION MATRIX -->
+          <div class="glass-panel p-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-key text-cyan-400"></i>
+              <span>Email Authentication Matrix</span>
+            </h3>
+
+            <div class="space-y-3">
+              <!-- SPF -->
+              <div class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-slate-200">SPF (Sender Policy Framework)</span>
+                  <span id="auth-spf-badge" class="badge-critical px-2 py-0.5 rounded text-xs font-mono font-bold">FAIL</span>
+                </div>
+                <p id="auth-spf-note" class="text-[11px] text-slate-400 font-mono">Domain did not authorize sending IP</p>
+              </div>
+
+              <!-- DKIM -->
+              <div class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-slate-200">DKIM (Cryptographic Signature)</span>
+                  <span id="auth-dkim-badge" class="badge-medium px-2 py-0.5 rounded text-xs font-mono font-bold">NEUTRAL</span>
+                </div>
+                <p id="auth-dkim-note" class="text-[11px] text-slate-400 font-mono">No valid cryptographic signature found</p>
+              </div>
+
+              <!-- DMARC -->
+              <div class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-slate-200">DMARC Alignment Policy</span>
+                  <span id="auth-dmarc-badge" class="badge-critical px-2 py-0.5 rounded text-xs font-mono font-bold">FAIL</span>
+                </div>
+                <p id="auth-dmarc-note" class="text-[11px] text-slate-400 font-mono">p=REJECT policy strictly violated</p>
+              </div>
+
+              <!-- HEADER ALIGNMENT -->
+              <div class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-slate-200">From vs Reply-To Alignment</span>
+                  <span id="auth-alignment-badge" class="badge-critical px-2 py-0.5 rounded text-xs font-mono font-bold">MISMATCH</span>
+                </div>
+                <p id="auth-alignment-note" class="text-[11px] text-slate-400 font-mono">Replies routed to suspicious lookalike domain</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: EXPLAINABLE EVIDENCE & EXTRACTED THREATS -->
+        <div class="lg:col-span-8 space-y-6">
+
+          <!-- EXPLAINABLE FORENSIC FACTORS -->
+          <div class="glass-panel p-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-cyan-400"></i>
+                <span>Explainable Threat Evidence & Risk Weights</span>
+              </span>
+              <span class="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">Multi-Signal Core</span>
+            </h3>
+
+            <div id="explainable-factors-list" class="space-y-2">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+
+          <!-- NLP SOCIAL ENGINEERING & TRIGGER PHRASES -->
+          <div class="glass-panel p-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-brain text-purple-400"></i>
+              <span>AI / NLP Social Engineering & Urgency Detector</span>
+            </h3>
+
+            <div class="mb-4">
+              <div class="text-xs text-slate-400 mb-2">Detected Coercive / Urgency Trigger Tokens:</div>
+              <div id="nlp-triggers-container" class="flex flex-wrap gap-2">
+                <!-- Dynamically populated tokens -->
+              </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-3">
+              <div class="text-xs text-slate-400 mb-1.5">Social Engineering Vectors Identified:</div>
+              <ul id="social-engineering-flags" class="space-y-1">
+                <!-- Populated dynamically -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- EXTRACTED URLS & DOMAIN REPUTATION -->
+          <div class="glass-panel p-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-link text-emerald-400"></i>
+              <span>Extracted URLs & Threat Intelligence Feeds</span>
+            </h3>
+            <div id="extracted-urls-list" class="space-y-2">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- RAW EML UPLOADER / TEXT INSPECTOR -->
+          <div class="glass-panel p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <i class="fa-solid fa-file-code text-cyan-400"></i>
+                <span>Raw .EML Headers & Message Inspector</span>
+              </h3>
+              <button id="analyze-btn" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 transition-all shadow-md shadow-cyan-500/20">
+                <i class="fa-solid fa-magnifying-glass-chart mr-1"></i> Scan Custom Input
+              </button>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div id="eml-dropzone" class="border-2 border-dashed border-slate-700/80 hover:border-cyan-500/80 rounded-xl p-4 text-center cursor-pointer transition-all mb-3 bg-slate-900/40">
+              <i class="fa-solid fa-cloud-arrow-up text-2xl text-cyan-400 mb-1"></i>
+              <p class="text-xs font-semibold text-slate-200">Drag & drop any .eml file here, or <span class="text-cyan-400 underline">browse files</span></p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Supports RFC 822 / MIME format raw email dumps</p>
+              <input type="file" id="eml-file-input" accept=".eml,.txt" class="hidden">
+            </div>
+
+            <textarea id="raw-eml-textarea" rows="5" class="w-full bg-[#050810] border border-slate-800 rounded-lg p-3 text-xs font-mono text-slate-300 focus:outline-none focus:border-cyan-400 resize-y" placeholder="Paste full RFC email headers here..."></textarea>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: RELAY TRACE & GEOLOCATION MAP -->
+    <!-- ========================================================================= -->
+    <div id="tab-trace" class="tab-pane hidden space-y-6">
+      
+      <!-- TOP INFRASTRUCTURE BANNER -->
+      <div class="glass-panel p-6 border-cyan-500/30">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+              <h2 class="text-base font-bold text-white">Probable Origin Infrastructure Attribution</h2>
+            </div>
+            <p class="text-xs text-slate-400">Reconstructed earliest reliable source node extracted from <code class="text-cyan-300">Received:</code> header chain boundaries.</p>
+          </div>
+          <div>
+            <span id="geo-confidence-badge" class="badge-medium px-3 py-1 text-xs font-bold rounded-full uppercase">
+              Attribution Confidence: MEDIUM
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-4 border-t border-slate-800">
+          <div>
+            <div class="text-[11px] text-slate-400 font-mono">Country & City</div>
+            <div class="text-sm font-bold text-slate-100 flex items-center gap-1.5 mt-0.5">
+              <i class="fa-solid fa-location-dot text-rose-400"></i>
+              <span id="geo-city">Frankfurt</span>, <span id="geo-country">Germany</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] text-slate-400 font-mono">Earliest Source IP</div>
+            <div id="geo-earliest-ip" class="text-sm font-mono font-bold text-cyan-400 mt-0.5">194.26.29.112</div>
+          </div>
+
+          <div>
+            <div class="text-[11px] text-slate-400 font-mono">Hosting / ISP</div>
+            <div id="geo-isp" class="text-sm font-bold text-slate-200 mt-0.5 truncate">Bulletproof VPS Hosting</div>
+          </div>
+
+          <div>
+            <div class="text-[11px] text-slate-400 font-mono">Autonomous System (ASN)</div>
+            <div id="geo-asn" class="text-sm font-mono text-purple-300 mt-0.5 truncate">AS48291</div>
+          </div>
+        </div>
+
+        <!-- CAVEAT WARNING ALERT -->
+        <div class="mt-4 p-3 rounded-lg bg-amber-950/40 border border-amber-800/60 flex items-start gap-2.5 text-xs text-amber-200">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 text-sm"></i>
+          <div>
+            <strong>Forensic Attribution Safeguard:</strong>
+            <span id="geo-caveat-text">Attribution represents probable source infrastructure. Never claim physical attacker identity solely from IP geolocation due to potential VPNs, open relays, or cloud VPS jump boxes.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP & HOP CHAIN GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEAFLET MAP CONTAINER -->
+        <div class="lg:col-span-7 glass-panel p-4 flex flex-col">
+          <div class="flex items-center justify-between mb-3 px-1">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <i class="fa-solid fa-earth-americas text-cyan-400"></i>
+              <span>Global Transmission Route Visualizer</span>
+            </h3>
+            <span class="text-[10px] font-mono text-slate-400">Leaflet.js + CartoDB Dark</span>
+          </div>
+          <div id="geolocation-map" class="w-full h-[420px] rounded-xl overflow-hidden border border-slate-800 bg-[#050810]"></div>
+        </div>
+
+        <!-- HOP-BY-HOP CHAIN -->
+        <div class="lg:col-span-5 glass-panel p-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-server text-cyan-400"></i>
+            <span>Reconstructed Relay Hop Chain (Earliest → Inbound)</span>
+          </h3>
+
+          <div id="relay-hops-container" class="space-y-0">
+            <!-- Dynamically populated hops -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: CAMPAIGN THREAT GRAPH -->
+    <!-- ========================================================================= -->
+    <div id="tab-graph" class="tab-pane hidden space-y-6">
+
+      <div class="glass-panel p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-white">Campaign Threat Correlation & Infrastructure Clustering</h2>
+              <span class="badge-critical px-2 py-0.5 rounded text-[10px] font-bold">SIH Key Differentiator</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Correlates multiple independent phishing emails sharing common bulletproof IPs, lookalike domains, and threat actor infrastructure.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono text-slate-400">Cluster: <strong id="camp-cluster-id" class="text-rose-400">CAMP-2026-YONO-991</strong></span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs mb-6">
+          <div>
+            <span class="text-slate-400">Campaign Name:</span>
+            <div id="camp-name-display" class="font-bold text-slate-100 mt-0.5">Operation Bengal Phish #04</div>
+          </div>
+          <div>
+            <span class="text-slate-400">Linked Emails in Dataset:</span>
+            <div id="camp-emails-count" class="font-mono font-bold text-cyan-400 mt-0.5">6 Target Messages</div>
+          </div>
+          <div>
+            <span class="text-slate-400">Syndicate Lookalike Domains:</span>
+            <div id="camp-domains-count" class="font-mono font-bold text-amber-400 mt-0.5">3 Active Domains</div>
+          </div>
+          <div>
+            <span class="text-slate-400">Threat Actor Vector:</span>
+            <div id="camp-actor-type" class="font-bold text-purple-300 mt-0.5 truncate">Financial Credential Harvesting</div>
+          </div>
+        </div>
+
+        <!-- CANVAS GRAPH VISUALIZER -->
+        <div class="relative w-full rounded-xl overflow-hidden border border-slate-800 bg-[#050810]">
+          <canvas id="campaign-graph-canvas" class="w-full block"></canvas>
+          <div class="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-md p-2.5 rounded-lg border border-slate-800 text-[11px] space-y-1 font-mono">
+            <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Campaign Hub</div>
+            <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Email Target Nodes</div>
+            <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Shared Source IPs</div>
+            <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Lookalike Domains</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: SIH 6-MEMBER TEAM COMMAND MATRIX -->
+    <!-- ========================================================================= -->
+    <div id="tab-team" class="tab-pane hidden space-y-6">
+
+      <div class="glass-panel p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-users-gear text-amber-400"></i>
+              <span>SIH 2026 6-Member Team Work Allocation & Responsibilities</span>
+            </h2>
+            <p class="text-xs text-slate-400">Clear modular responsibilities for 5 coding-background members and 1 non-coding cyber research/product lead.</p>
+          </div>
+          <span class="badge-cyan px-3 py-1 text-xs font-mono font-bold rounded-lg">Antigravity Orchestrated</span>
+        </div>
+
+        <!-- 6 MEMBER CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <!-- Member 1 -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 glass-panel-interactive flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold text-cyan-400">MEMBER 1</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-300 border border-blue-800">AI / NLP Lead</span>
+              </div>
+              <h4 class="text-sm font-bold text-white mb-2">Machine Learning & NLP Detection</h4>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside mb-4">
+                <li>Curate phishing corpora (Nazario, SpamAssassin, Enron).</li>
+                <li>Feature extraction: Urgency, coercion, credential harvesting.</li>
+                <li>Build transformer/NLP classifier with explainable probability score.</li>
+                <li>Explain <em>why</em> email is phishing, not just a black-box label.</li>
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-cyan-300">
+              Deliverable: <code class="text-white">nlp_detector.py</code>
+            </div>
+          </div>
+
+          <!-- Member 2 -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 glass-panel-interactive flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold text-emerald-400">MEMBER 2</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">Security Lead</span>
+              </div>
+              <h4 class="text-sm font-bold text-white mb-2">Email Security & RFC Header Parser</h4>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside mb-4">
+                <li>Implement RFC-compliant <code class="text-cyan-300">.eml</code> parsing in Python.</li>
+                <li>Verify SPF records against sender IP via DNS.</li>
+                <li>DKIM cryptographic signature verification & DMARC alignment.</li>
+                <li>Deconstruct <code class="text-cyan-300">Received:</code> headers to build relay transmission path.</li>
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-emerald-300">
+              Deliverable: <code class="text-white">email_parser.py</code> + <code class="text-white">auth_analyzer.py</code>
+            </div>
+          </div>
+
+          <!-- Member 3 -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 glass-panel-interactive flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold text-purple-400">MEMBER 3</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950 text-purple-300 border border-purple-800">Backend Lead</span>
+              </div>
+              <h4 class="text-sm font-bold text-white mb-2">FastAPI Backend & Threat Intel Engine</h4>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside mb-4">
+                <li>FastAPI REST architecture connecting all detection services.</li>
+                <li>Integrate AbuseIPDB, VirusTotal, and PhishTank APIs with caching.</li>
+                <li>Multi-Signal Risk Engine combining headers, ML, and threat feeds.</li>
+                <li>Campaign graph database / correlation clustering algorithms.</li>
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-purple-300">
+              Deliverable: <code class="text-white">main.py</code> + <code class="text-white">risk_engine.py</code>
+            </div>
+          </div>
+
+          <!-- Member 4 -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 glass-panel-interactive flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold text-amber-400">MEMBER 4</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">Frontend Lead</span>
+              </div>
+              <h4 class="text-sm font-bold text-white mb-2">React / Tailwind Dashboard & Visuals</h4>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside mb-4">
+                <li>Modern investigator UI with responsive dashboard and dark mode.</li>
+                <li>Leaflet.js interactive OpenStreetMap route visualization.</li>
+                <li>Interactive Campaign Graph network visualizer.</li>
+                <li>Connect frontend asynchronously to FastAPI backend endpoints.</li>
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-amber-300">
+              Deliverable: <code class="text-white">src/components/Dashboard.jsx</code>
+            </div>
+          </div>
+
+          <!-- Member 5 -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 glass-panel-interactive flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold text-rose-400">MEMBER 5</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800">QA & Testing Lead</span>
+              </div>
+              <h4 class="text-sm font-bold text-white mb-2">Dataset Curation, Testing & Integration</h4>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside mb-4">
+                <li>Curate 50+ diverse test fixtures (phishing, legitimate, BEC, edge-cases).</li>
+                <li>Evaluate precision, recall, false positives & false negatives.</li>
+                <li>End-to-end integration tests across full pipeline (Upload → Report).</li>
+                <li>Prepare offline backup test suite so live SIH demo never crashes.</li>
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-rose-300">
+              Deliverable: <code class="text-white">tests/test_pipeline.py</code>
+            </div>
+          </div>
+
+          <!-- Member 6 (Non-Coder) -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-amber-500/40 glass-panel-interactive flex flex-col justify-between shadow-lg shadow-amber-500/5">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold text-amber-300">MEMBER 6 (NON-CODER)</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-700">Cyber Research & Product</span>
+              </div>
+              <h4 class="text-sm font-bold text-white mb-2">Threat Taxonomy, UI/UX & Presentation</h4>
+              <ul class="text-xs text-slate-400 space-y-1.5 list-disc list-inside mb-4">
+                <li>Own threat taxonomy (BEC, brand spoofing, lookalike domains).</li>
+                <li>Design user journey & investigator flow (Evidence → Trace → Report).</li>
+                <li>Research existing tool limitations (proof of SIH novelty).</li>
+                <li>Own SIH pitch deck, demo script, forensic PDF formatting & live presentation.</li>
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-amber-300">
+              Deliverable: <code class="text-white">SIH_Pitch_Deck.pdf</code> + <code class="text-white">Threat_Taxonomy.md</code>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 4-PHASE DEVELOPMENT ROADMAP -->
+        <div class="mt-8 pt-6 border-t border-slate-800">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-timeline text-cyan-400"></i>
+            <span>Recommended SIH 4-Phase Execution Strategy</span>
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <span class="text-cyan-400 font-mono font-bold">PHASE 1</span>
+              <h5 class="font-bold text-slate-200 mt-1">Architecture Alignment</h5>
+              <p class="text-slate-400 mt-1">Entire team aligns on end-to-end flow and JSON data contracts between modules.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <span class="text-emerald-400 font-mono font-bold">PHASE 2</span>
+              <h5 class="font-bold text-slate-200 mt-1">Parallel Prototypes</h5>
+              <p class="text-slate-400 mt-1">Members 1-5 build modular services while Member 6 completes threat research and UI wireframes.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <span class="text-purple-400 font-mono font-bold">PHASE 3</span>
+              <h5 class="font-bold text-slate-200 mt-1">Pipeline Integration</h5>
+              <p class="text-slate-400 mt-1">Connect Parser → Auth Check → NLP → Threat Intel → Risk Engine → Leaflet Map → PDF Report.</p>
+            </div>
+
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <span class="text-rose-400 font-mono font-bold">PHASE 4</span>
+              <h5 class="font-bold text-slate-200 mt-1">SIH Demo Polish</h5>
+              <p class="text-slate-400 mt-1">Rehearse live 5-minute presentation with 4 standard fixtures. Verify offline fallback.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: ANTIGRAVITY AI CAPABILITIES & STEP-BY-STEP ROADMAP -->
+    <!-- ========================================================================= -->
+    <div id="tab-capabilities" class="tab-pane hidden space-y-6">
+
+      <!-- WHAT ANTIGRAVITY CAN DO -->
+      <div class="glass-panel p-6 border-cyan-500/40">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-rose-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+            <i class="fa-solid fa-atom text-slate-950 text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white">What Google Antigravity AI Can Do For You</h2>
+            <p class="text-xs text-slate-400">Your Autonomous Full-Stack AI Pair Programmer, Architect & Multi-Agent Orchestrator</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <i class="fa-solid fa-code text-cyan-400 text-lg mb-2"></i>
+            <h4 class="text-sm font-bold text-slate-200 mb-1">Full-Stack Code Generation</h4>
+            <p class="text-xs text-slate-400">Builds clean FastAPI backend services, React dashboards, Leaflet maps, and PDF export engines with zero boilerplate errors.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <i class="fa-solid fa-shield-virus text-emerald-400 text-lg mb-2"></i>
+            <h4 class="text-sm font-bold text-slate-200 mb-1">Cybersecurity Domain Logic</h4>
+            <p class="text-xs text-slate-400">Implements RFC-822 email parsing, SPF/DKIM/DMARC validators, Received-chain hop reconstruction, and VirusTotal/AbuseIPDB clients.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <i class="fa-solid fa-vial-circle-check text-purple-400 text-lg mb-2"></i>
+            <h4 class="text-sm font-bold text-slate-200 mb-1">Automated Testing & Integration</h4>
+            <p class="text-xs text-slate-400">Generates test suites with real fixtures, validates false positive rates, and runs terminal tests directly on your machine.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <i class="fa-solid fa-diagram-successor text-amber-400 text-lg mb-2"></i>
+            <h4 class="text-sm font-bold text-slate-200 mb-1">Multi-Agent Subagent Execution</h4>
+            <p class="text-xs text-slate-400">Spawns specialized background agents (Researcher, Tester, Frontend Coder) to work in parallel on complex multi-file tasks.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <i class="fa-solid fa-plug-circle-bolt text-rose-400 text-lg mb-2"></i>
+            <h4 class="text-sm font-bold text-slate-200 mb-1">API Fallbacks & Offline Caching</h4>
+            <p class="text-xs text-slate-400">Adds resilient error handling and mock cache fallbacks so your SIH live demo never fails due to network or rate limit issues.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <i class="fa-solid fa-chalkboard-user text-blue-400 text-lg mb-2"></i>
+            <h4 class="text-sm font-bold text-slate-200 mb-1">SIH Pitch & Presentation Readiness</h4>
+            <p class="text-xs text-slate-400">Helps formulate explainable AI metrics, slides architecture, and judge Q&A defense for the non-coding and technical members alike.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP-BY-STEP PROMPT ROADMAP (Prompt A to Prompt L) -->
+      <div class="glass-panel p-6">
+        <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-list-ol text-cyan-400"></i>
+          <span>Step-by-Step Prompt Execution Guide (Prompts A → L)</span>
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">You can copy and give any of these prompts to Antigravity as you develop each module sequentially:</p>
+
+        <div class="space-y-3 font-mono text-xs">
+          
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-cyan-400 font-bold">PROMPT A:</span>
+              <span class="text-slate-300 ml-2">"Read this entire project context. Do not code yet. Explain the architecture, identify risks/unknowns, and propose the MVP implementation plan."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Read this entire project context. Do not code yet. Explain the architecture, identify risks/unknowns, and propose the MVP implementation plan.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-cyan-400 font-bold">PROMPT B:</span>
+              <span class="text-slate-300 ml-2">"Set up the backend (FastAPI) and frontend (React/Tailwind) project structure. Make sure both run successfully."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Set up the backend (FastAPI) and frontend (React/Tailwind) project structure. Make sure both run successfully.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-emerald-400 font-bold">PROMPT C:</span>
+              <span class="text-slate-300 ml-2">"Implement the .eml parser service and create unit tests using safe sample fixtures."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Implement the .eml parser service and create unit tests using safe sample fixtures.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-emerald-400 font-bold">PROMPT D:</span>
+              <span class="text-slate-300 ml-2">"Implement email header / Received-chain analysis and SPF/DKIM/DMARC authentication result parsing."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Implement email header / Received-chain analysis and SPF/DKIM/DMARC authentication result parsing.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-purple-400 font-bold">PROMPT E:</span>
+              <span class="text-slate-300 ml-2">"Implement URL extraction, lookalike domain similarity checks, and explainable phishing risk scoring features."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Implement URL extraction, lookalike domain similarity checks, and explainable phishing risk scoring features.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-purple-400 font-bold">PROMPT F:</span>
+              <span class="text-slate-300 ml-2">"Add NLP/ML classification using a practical pretrained transformer model or modular explainable interface."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Add NLP/ML classification using a practical pretrained transformer model or modular explainable interface.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-amber-400 font-bold">PROMPT G:</span>
+              <span class="text-slate-300 ml-2">"Implement threat-intelligence integrations (AbuseIPDB, VirusTotal) with environment variables and graceful API fallback caching."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Implement threat-intelligence integrations (AbuseIPDB, VirusTotal) with environment variables and graceful API fallback caching.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-amber-400 font-bold">PROMPT H:</span>
+              <span class="text-slate-300 ml-2">"Implement trace / geolocation and attribution confidence scoring logic for earliest reliable Received hops."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Implement trace / geolocation and attribution confidence scoring logic for earliest reliable Received hops.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-rose-400 font-bold">PROMPT I:</span>
+              <span class="text-slate-300 ml-2">"Implement campaign correlation engine to cluster emails sharing infrastructure and return graph node-edge data."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Implement campaign correlation engine to cluster emails sharing infrastructure and return graph node-edge data.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-rose-400 font-bold">PROMPT J:</span>
+              <span class="text-slate-300 ml-2">"Build the complete frontend investigator dashboard with Leaflet map, graph visualizer, and live results."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Build the complete frontend investigator dashboard with Leaflet map, graph visualizer, and live results.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-cyan-400 font-bold">PROMPT K:</span>
+              <span class="text-slate-300 ml-2">"Build cryptographic forensic PDF report generator with SHA-256 evidence integrity hashing."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Build cryptographic forensic PDF report generator with SHA-256 evidence integrity hashing.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-emerald-400 font-bold">PROMPT L:</span>
+              <span class="text-slate-300 ml-2">"Run end-to-end test suite across all 4 sample test cases, verify zero crashes, and summarize the live demo pitch."</span>
+            </div>
+            <button onclick="copyPromptText(this, 'Run end-to-end test suite across all 4 sample test cases, verify zero crashes, and summarize the live demo pitch.')" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-[11px] whitespace-nowrap transition-all">Copy</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- PRINT / EXPORT DOSSIER (Rendered when user clicks Export or Ctrl+P) -->
+  <!-- ========================================================================= -->
+  <div id="forensic-dossier-print" class="hidden print:block p-8 bg-white text-black font-sans">
+    <div class="border-b-2 border-black pb-4 mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-bold uppercase tracking-wide">AegisMail Digital Forensic Intelligence Report</h1>
+          <p class="text-xs text-gray-600">Smart India Hackathon 2026 • Problem Statement ID: 26106</p>
+        </div>
+        <div class="text-right text-xs font-mono">
+          <div><strong>Case ID:</strong> <span id="print-case-id">CASE-2026-SBI-98214</span></div>
+          <div><strong>Generated:</strong> <span id="print-timestamp">31-Aug-2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HASH & INTEGRITY -->
+    <div class="bg-gray-100 p-3 rounded border border-gray-300 mb-6 text-xs font-mono">
+      <div><strong>Digital Evidence SHA-256 Hash:</strong> <span id="print-hash">sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span></div>
+      <div><strong>Chain of Custody:</strong> Unaltered RFC-822 EML artifact parsed via AegisMail Forensic Engine.</div>
+    </div>
+
+    <!-- METADATA & RISK -->
+    <div class="grid grid-cols-2 gap-4 mb-6 text-xs">
+      <div class="border p-3 rounded">
+        <h3 class="font-bold uppercase mb-2 border-b pb-1">Email Metadata</h3>
+        <div><strong>Subject:</strong> <span id="print-subject">Urgent Notice</span></div>
+        <div><strong>From:</strong> <span id="print-from">alert@sbi.co.in</span></div>
+        <div><strong>Reply-To:</strong> <span id="print-replyto">support@sbi-kyc-desk.cc</span></div>
+      </div>
+      <div class="border p-3 rounded">
+        <h3 class="font-bold uppercase mb-2 border-b pb-1">Forensic Threat Assessment</h3>
+        <div><strong>Overall Score:</strong> <span id="print-score" class="font-bold text-red-600">94 / 100</span></div>
+        <div><strong>Classification:</strong> <span id="print-level" class="font-bold">CRITICAL PHISHING</span></div>
+      </div>
+    </div>
+
+    <!-- AUTHENTICATION -->
+    <div class="border p-3 rounded mb-6 text-xs">
+      <h3 class="font-bold uppercase mb-2 border-b pb-1">Authentication Verification</h3>
+      <div><strong>SPF:</strong> <span id="print-spf">FAIL</span></div>
+      <div><strong>DKIM:</strong> <span id="print-dkim">NEUTRAL</span></div>
+      <div><strong>DMARC:</strong> <span id="print-dmarc">FAIL</span></div>
+    </div>
+
+    <!-- INFRASTRUCTURE -->
+    <div class="border p-3 rounded mb-6 text-xs">
+      <h3 class="font-bold uppercase mb-2 border-b pb-1">Reconstructed Origin Infrastructure</h3>
+      <div><strong>Probable Location:</strong> <span id="print-origin">Frankfurt, Germany (194.26.29.112)</span></div>
+      <div><strong>ISP / ASN:</strong> <span id="print-asn">Bulletproof VPS Hosting | AS48291</span></div>
+      <div><strong>Attribution Confidence:</strong> <span id="print-confidence">MEDIUM</span></div>
+      <p class="mt-2 text-[10px] text-gray-500 italic">Notice: IP Geolocation is indicative of transmission gateway infrastructure and does not constitute conclusive physical identity attribution without ISP subscriber subpoena.</p>
+    </div>
+
+    <!-- SIGN-OFF -->
+    <div class="mt-12 pt-4 border-t border-black flex justify-between text-xs text-gray-700">
+      <div><strong>Investigating Lead:</strong> SIH Forensic Analyst</div>
+      <div><strong>Platform:</strong> AegisMail AI (Google Antigravity Orchestration)</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="no-print border-t border-slate-800/80 bg-[#0a0f1d] py-4 text-center text-xs text-slate-500 font-mono">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>AegisMail Forensics AI — SIH 2026 Problem Statement 26106</div>
+      <div class="text-slate-400">“We do not just detect the email. We investigate it.”</div>
+      <div>Powered by <span class="text-cyan-400 font-semibold">Google Antigravity AI</span></div>
+    </div>
+  </footer>
+
+  <!-- Leaflet JS & App Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
